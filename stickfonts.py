@@ -67,66 +67,72 @@ def convert_text_to_svg(text, font_path, output_file, font_size, position, lette
         cmap = font.getBestCmap()
         dwg = svgwrite.Drawing(output_file, profile="tiny", size=DOC_SIZE)
         x, y = position
-        scale = font_size / font["head"].unitsPerEm # type: ignore
+        scale = font_size / font["head"].unitsPerEm  # type: ignore
 
         # Calculate maximum width for wrapping
         max_width = DOC_SIZE[0] - LEFT_BORDER - RIGHT_BORDER
         default_space_width = font_size / 2  # Fallback space width
 
-        words = text.split()  # Split the text into words
+        paragraphs = text.split("\n")  # Split text into paragraphs
+        for paragraph in paragraphs:
+            words = paragraph.split()  # Split the paragraph into words
 
-        for word in words:
-            word_width = 0
-            for char in word:
-                glyph_name = cmap.get(ord(char))
-                if glyph_name:
-                    glyph = glyf_table[glyph_name] # type: ignore
-                    char_width = glyph.advanceWidth * scale if hasattr(glyph, "advanceWidth") else (glyph.xMax - glyph.xMin) * scale
-                    word_width += char_width + letter_spacing
-            word_width -= letter_spacing  # Remove the trailing letter spacing for the word
+            for word in words:
+                word_width = 0
+                for char in word:
+                    glyph_name = cmap.get(ord(char))
+                    if glyph_name:
+                        glyph = glyf_table[glyph_name]  # type: ignore
+                        char_width = glyph.advanceWidth * scale if hasattr(glyph, "advanceWidth") else (glyph.xMax - glyph.xMin) * scale
+                        word_width += char_width + letter_spacing
+                word_width -= letter_spacing  # Remove the trailing letter spacing for the word
 
-            # Check if the word fits on the current line
-            if x + word_width > max_width:
-                # Move to the next line
-                x = LEFT_BORDER
-                y += font_size * line_spacing
+                # Check if the word fits on the current line
+                if x + word_width > max_width:
+                    # Move to the next line
+                    x = LEFT_BORDER
+                    y += font_size * line_spacing
 
-            # Render the word
-            for char in word:
-                if char == " ":  # Spaces handled below; skip here
-                    continue
+                # Render the word
+                for char in word:
+                    if char == " ":  # Spaces handled below; skip here
+                        continue
 
-                glyph_name = cmap.get(ord(char))
-                if not glyph_name:
-                    continue
-                glyph = glyf_table[glyph_name] # type: ignore
-                if glyph.isComposite():
-                    print(f"Composite glyphs not supported: {char}")
-                    continue
-                if glyph.numberOfContours > 0:
-                    coordinates = glyph.coordinates
-                    contours = glyph.endPtsOfContours
+                    glyph_name = cmap.get(ord(char))
+                    if not glyph_name:
+                        continue
+                    glyph = glyf_table[glyph_name]  # type: ignore
+                    if glyph.isComposite():
+                        print(f"Composite glyphs not supported: {char}")
+                        continue
+                    if glyph.numberOfContours > 0:
+                        coordinates = glyph.coordinates
+                        contours = glyph.endPtsOfContours
 
-                    start = 0
-                    for end in contours:
-                        path_data = [f"M {x + coordinates[start][0] * scale} {y - coordinates[start][1] * scale}"]
-                        for i in range(start + 1, end + 1):
-                            path_data.append(f"L {x + coordinates[i][0] * scale} {y - coordinates[i][1] * scale}")
-                        path_data.append("Z")
-                        dwg.add(dwg.path(" ".join(path_data), fill="none", stroke="black"))
-                        start = end + 1
+                        start = 0
+                        for end in contours:
+                            path_data = [f"M {x + coordinates[start][0] * scale} {y - coordinates[start][1] * scale}"]
+                            for i in range(start + 1, end + 1):
+                                path_data.append(f"L {x + coordinates[i][0] * scale} {y - coordinates[i][1] * scale}")
+                            path_data.append("Z")
+                            dwg.add(dwg.path(" ".join(path_data), fill="none", stroke="black"))
+                            start = end + 1
 
-                # Advance x position for the next character
-                if hasattr(glyph, "advanceWidth"):
-                    x += glyph.advanceWidth * scale + letter_spacing
-                else:
-                    x += (glyph.xMax - glyph.xMin) * scale + letter_spacing
+                    # Advance x position for the next character
+                    if hasattr(glyph, "advanceWidth"):
+                        x += glyph.advanceWidth * scale + letter_spacing
+                    else:
+                        x += (glyph.xMax - glyph.xMin) * scale + letter_spacing
 
-            # Add a space after the word
-            x += default_space_width
-            if x > max_width:  # Avoid leftover trailing spaces exceeding max width
-                x = LEFT_BORDER
-                y += font_size * line_spacing
+                # Add a space after the word
+                x += default_space_width
+                if x > max_width:  # Avoid leftover trailing spaces exceeding max width
+                    x = LEFT_BORDER
+                    y += font_size * line_spacing
+
+            # After finishing a paragraph, move to the next line with additional spacing
+            x = LEFT_BORDER
+            y += font_size * line_spacing * 2  # Double line spacing between paragraphs
 
         dwg.save()
         return True
