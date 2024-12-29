@@ -217,6 +217,22 @@ line_spacing_entry = tk.Entry(root, width=10)
 line_spacing_entry.insert(0, "1.2")  # Default value
 line_spacing_entry.pack(pady=5)
 
+# Border settings
+border_label = tk.Label(root, text="Set border sizes:")
+border_label.pack(pady=5)
+top_border_entry = tk.Entry(root, width=10)
+top_border_entry.insert(0, TOP_BORDER)
+top_border_entry.pack(pady=2)
+bottom_border_entry = tk.Entry(root, width=10)
+bottom_border_entry.insert(0, BOTTOM_BORDER)
+bottom_border_entry.pack(pady=2)
+left_border_entry = tk.Entry(root, width=10)
+left_border_entry.insert(0, LEFT_BORDER)
+left_border_entry.pack(pady=2)
+right_border_entry = tk.Entry(root, width=10)
+right_border_entry.insert(0, RIGHT_BORDER)
+right_border_entry.pack(pady=2)
+
 # Generate button
 generate_button = tk.Button(root, text="Generate SVG", command=generate_svg)
 generate_button.pack(pady=10)
