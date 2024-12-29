@@ -142,22 +142,35 @@ def convert_text_to_svg(text, font_path, output_file, font_size, position, lette
 
 
 def generate_svg():
-    text = text_box.get("1.0", tk.END).strip()
-    if not text:
-        status_label.config(text="Please enter some text.")
-        return
-    filepath = filedialog.asksaveasfilename(
-        defaultextension=".svg",
-        filetypes=[("SVG files", "*.svg"), ("All files", "*.*")]
-    )
-    if not filepath:
-        status_label.config(text="Save operation canceled.")
-        return
-
+    global TOP_BORDER, BOTTOM_BORDER, LEFT_BORDER, RIGHT_BORDER
     try:
+        # Update borders from user input
+        TOP_BORDER = float(top_border_entry.get())
+        BOTTOM_BORDER = float(bottom_border_entry.get())
+        LEFT_BORDER = float(left_border_entry.get())
+        RIGHT_BORDER = float(right_border_entry.get())
+
+        # Fetch the text input
+        text = text_box.get("1.0", tk.END).strip()
+        if not text:
+            status_label.config(text="Please enter some text.")
+            return
+
+        # Fetch the file path for saving the SVG
+        filepath = filedialog.asksaveasfilename(
+            defaultextension=".svg",
+            filetypes=[("SVG files", "*.svg"), ("All files", "*.*")]
+        )
+        if not filepath:
+            status_label.config(text="Save operation canceled.")
+            return
+
+        # Fetch font and spacing values
         font_path = os.path.join(FONT_FOLDER, f"{FONT_NAME}.ttf")
         letter_spacing = float(letter_spacing_entry.get())
         line_spacing = float(line_spacing_entry.get())
+
+        # Generate the SVG
         success = convert_text_to_svg(
             text, font_path, filepath, TEXT_SIZE, (LEFT_BORDER, TOP_BORDER), letter_spacing, line_spacing
         )
@@ -166,7 +179,9 @@ def generate_svg():
         else:
             status_label.config(text="Error generating SVG.")
     except ValueError:
-        status_label.config(text="Please enter valid values for letter and line spacing.")
+        status_label.config(text="Please enter valid numeric values for borders, letter spacing, and line spacing.")
+    except Exception as e:
+        status_label.config(text=f"An unexpected error occurred: {e}")
 
 
 # GUI setup
